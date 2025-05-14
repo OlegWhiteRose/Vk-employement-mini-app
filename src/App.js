@@ -10,6 +10,7 @@ import {
   Group,
   Div
 } from '@vkontakte/vkui';
+import { testData } from './utils/testData';
 
 import UserProfileForm from './components/UserProfile/UserProfileForm';
 import ContactData from './components/ContactData/ContactData';
@@ -17,18 +18,8 @@ import AboutMe from './components/AboutMe/AboutMe';
 import Export from './components/Export/Export';
 
 export const App = () => {
-  const [formData, setFormData] = useState({
-    name: '',
-    lastName: '',
-    avatar: null,
-    phone: '',
-    email: '',
-    vk: '',
-    education: '',
-    skills: '',
-    experience: '',
-    preferences: ''
-  });
+  // Инициализируем состояние сразу с тестовыми данными
+  const [formData, setFormData] = useState(testData);
 
   useEffect(() => {
     async function loadUserData() {
@@ -36,8 +27,8 @@ export const App = () => {
         const user = await bridge.send('VKWebAppGetUserInfo');
         setFormData(prev => ({
           ...prev,
-          name: user.first_name || '',
-          lastName: user.last_name || '',
+          name: user.first_name || prev.name,
+          lastName: user.last_name || prev.lastName,
           vk: `https://vk.com/id${user.id}`
         }));
       } catch (error) {
@@ -74,9 +65,15 @@ export const App = () => {
                     onDataChange={(data) => handleDataChange(data)}
                     initialData={formData}
                   />
-                  <Export 
-                    formData={formData} 
-                  />
+                  <Div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    width: '100%'
+                  }}>
+                    <Export 
+                      formData={formData} 
+                    />
+                  </Div>
                   <Div></Div>
                 </Group>
               </Panel>
@@ -87,3 +84,4 @@ export const App = () => {
     </AdaptivityProvider>
   );
 };
+

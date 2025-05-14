@@ -1,22 +1,23 @@
 import { useState, useEffect } from 'react';
 import { 
-  Textarea, 
-  FormItem, 
-  FormLayoutGroup, 
-  SplitLayout 
+  SplitLayout,
+  FormItem,
+  Textarea,
+  Header,
+  Div
 } from '@vkontakte/vkui';
 import Avatar from './Avatar';
 import UserProfileSplit from './UserProfileSplit';
 
-const ProfileForm = ({ onDataChange }) => {
-  const [name, setName] = useState('');
-  const [lastName, setLastName] = useState('');
+const ProfileForm = ({ onDataChange, initialData }) => {
+  const [name, setName] = useState(initialData?.name || '');
+  const [lastName, setLastName] = useState(initialData?.lastName || '');
   const [avatarFile, setAvatarFile] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.matchMedia('(max-width: 500px)').matches);
+      setIsMobile(window.matchMedia('(max-width: 600px)').matches);
     };
     
     checkMobile();
@@ -55,27 +56,32 @@ const ProfileForm = ({ onDataChange }) => {
   };
 
   return (
-    <SplitLayout style={isMobile ? { flexDirection: 'column' } : {}}>
-      <UserProfileSplit 
-        style={isMobile ? { 
-          width: '100%', 
-          marginBottom: '16px' 
-        } : {}}
-      >
-        <Avatar onFileChange={handleAvatarChange} />
-      </UserProfileSplit>
-
-      <UserProfileSplit>
-        <FormLayoutGroup 
-          mode="vertical" 
+    <Div style={{
+      maxWidth: '1000px',
+      margin: '0 auto',
+      padding: isMobile ? '12px' : '20px'
+    }}>
+      <SplitLayout style={{
+        flexDirection: 'column',
+        gap: '24px'
+      }}>
+        <UserProfileSplit 
           style={{
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            height: isMobile ? 'auto' : '200px',
-            padding: isMobile ? '0 16px' : '0'
+            width: '200px',
+            minWidth: '200px',
+            paddingLeft: '16px'
           }}
         >
+          <Avatar onFileChange={handleAvatarChange} />
+        </UserProfileSplit>
+
+        <div style={{ padding: '0' }}>
+          <Header style={{
+            marginBottom: isMobile ? '12px' : '16px',
+            fontSize: isMobile ? '16px' : '20px'
+          }}>
+            Персональные данные
+          </Header>
           <FormItem htmlFor="name" top="Имя">
             <Textarea 
               maxLength={20} 
@@ -98,10 +104,11 @@ const ProfileForm = ({ onDataChange }) => {
               style={isMobile ? { fontSize: '14px' } : {}}
             />
           </FormItem>
-        </FormLayoutGroup>
-      </UserProfileSplit>
-    </SplitLayout>
+        </div>
+      </SplitLayout>
+    </Div>
   );
 };
 
 export default ProfileForm;
+

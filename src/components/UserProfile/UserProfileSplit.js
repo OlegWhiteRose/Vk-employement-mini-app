@@ -18,3 +18,4 @@ const UserProfileSplit = ({ children, width = '224px', height = '234px' }) => {
 };
 
 export default UserProfileSplit;
+
