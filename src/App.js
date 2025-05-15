@@ -20,7 +20,6 @@ export const App = () => {
   const [formData, setFormData] = useState({
     name: '',
     lastName: '',
-    avatar: null,
     phone: '',
     email: '',
     vk: '',
@@ -33,13 +32,45 @@ export const App = () => {
   useEffect(() => {
     async function loadUserData() {
       try {
+        // Получаем основную информацию о пользователе
         const user = await bridge.send('VKWebAppGetUserInfo');
+        
+        // Обновляем имя, фамилию и ссылку на VK
         setFormData(prev => ({
           ...prev,
           name: user.first_name || '',
           lastName: user.last_name || '',
-          vk: `https://vk.com/id${user.id}`
+          vk: `vk.com/id${user.id}`
         }));
+
+        try {
+          // Пытаемся получить email
+          const emailData = await bridge.send('VKWebAppGetEmail');
+          if (emailData.email) {
+            setFormData(prev => ({
+              ...prev,
+              email: emailData.email
+            }));
+          }
+        } catch (error) {
+          console.log('Пользователь не предоставил доступ к email');
+        }
+
+        try {
+          // Пытаемся получить номер телефона
+          const phoneData = await bridge.send('VKWebAppGetPhoneNumber');
+          if (phoneData.phone_number) {
+            // Форматируем номер телефона в нужный формат
+            const formattedPhone = phoneData.phone_number.replace(/^(\d)(\d{3})(\d{3})(\d{2})(\d{2})$/, '+$1 ($2) $3-$4-$5');
+            setFormData(prev => ({
+              ...prev,
+              phone: formattedPhone
+            }));
+          }
+        } catch (error) {
+          console.log('Пользователь не предоставил доступ к номеру телефона');
+        }
+
       } catch (error) {
         console.error('Ошибка загрузки данных VK:', error);
       }
@@ -74,9 +105,15 @@ export const App = () => {
                     onDataChange={(data) => handleDataChange(data)}
                     initialData={formData}
                   />
-                  <Export 
-                    formData={formData} 
-                  />
+                  <Div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    width: '100%'
+                  }}>
+                    <Export 
+                      formData={formData} 
+                    />
+                  </Div>
                   <Div></Div>
                 </Group>
               </Panel>
@@ -87,3 +124,4 @@ export const App = () => {
     </AdaptivityProvider>
   );
 };
+

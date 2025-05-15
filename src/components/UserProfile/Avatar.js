@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { Div, Button } from '@vkontakte/vkui';
 
-const Avatar = ({ size = '190px', onFileChange }) => {
+const Avatar = ({ onFileChange }) => {
   const inputRef = useRef(null);
   const [src, setSrc] = useState(null);
 
@@ -18,7 +18,7 @@ const Avatar = ({ size = '190px', onFileChange }) => {
   };
 
   return (
-    <Div>
+    <Div style={{ padding: 0 }}>
       <input
         ref={inputRef}
         type="file"
@@ -29,12 +29,14 @@ const Avatar = ({ size = '190px', onFileChange }) => {
 
       <Button
         style={{
-          width: size,
-          height: size,
+          width: '200px',
+          height: '200px',
           backgroundImage: src ? `url(${src})` : 'none',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
+          padding: '8px',
+          margin: '16px'
         }}
         onClick={handleButtonClick}
       >
