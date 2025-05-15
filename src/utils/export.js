@@ -1,6 +1,7 @@
 import { Document, Packer, Paragraph, TextRun, ImageRun, HeadingLevel, AlignmentType, convertInchesToTwip } from "docx";
 import { saveAs } from "file-saver";
 import html2pdf from 'html2pdf.js';
+import bridge from '@vkontakte/vk-bridge';
 
 const getFormData = (element) => {
     const textareas = element.querySelectorAll('textarea');
@@ -204,11 +205,6 @@ export async function exportToPDF(elementId, filename = 'CV.pdf') {
         `;
         container.appendChild(style);
         
-        const nameElement = container.querySelector('div');
-        if (nameElement && nameElement.textContent.includes(formData.name)) {
-            nameElement.className = 'name-section';
-        }
-        
         const sections = container.children;
         Array.from(sections).forEach(section => {
             if (!section.classList.contains('pdf-container') && section.tagName !== 'STYLE') {
@@ -217,7 +213,6 @@ export async function exportToPDF(elementId, filename = 'CV.pdf') {
         });
         
         container.classList.add('pdf-container');
-        
         document.body.appendChild(container);
         
         const opt = {
@@ -240,8 +235,45 @@ export async function exportToPDF(elementId, filename = 'CV.pdf') {
                 avoid: ['.section', 'img', 'h1', 'h2']
             }
         };
+
+        const pdfBlob = await html2pdf().set(opt).from(container).outputPdf('blob');
         
-        await html2pdf().set(opt).from(container).save();
+        // Check if running in VK Mini App
+        const isVKMiniApp = window.location.href.includes('vk_platform=mobile_android') || 
+                           window.location.href.includes('vk_platform=mobile_iphone');
+
+        if (isVKMiniApp) {
+            // Create a temporary URL for the PDF blob
+            const pdfUrl = URL.createObjectURL(pdfBlob);
+            
+            try {
+                // Use VK Bridge to download the file
+                const result = await bridge.send('VKWebAppDownloadFile', {
+                    url: pdfUrl,
+                    filename: filename
+                });
+                
+                if (!result.result) {
+                    throw new Error('Failed to download file through VK Bridge');
+                }
+            } catch (error) {
+                console.error('Error downloading through VK Bridge:', error);
+                alert('Произошла ошибка при скачивании файла. Попробуйте позже.');
+            } finally {
+                // Clean up the temporary URL
+                setTimeout(() => URL.revokeObjectURL(pdfUrl), 10000);
+            }
+        } else {
+            // Browser download fallback
+            const pdfUrl = URL.createObjectURL(pdfBlob);
+            const downloadLink = document.createElement('a');
+            downloadLink.href = pdfUrl;
+            downloadLink.download = filename;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            setTimeout(() => URL.revokeObjectURL(pdfUrl), 10000);
+        }
         
         document.body.removeChild(container);
     } catch (err) {
