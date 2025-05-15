@@ -42,9 +42,31 @@ const AboutMe = ({ onDataChange, initialData }) => {
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
-    // Функция для проверки орфографии с задержкой
     const checkFieldSpelling = async (field, value) => {
-        if (!value.trim()) return;
+        if (!value.trim()) {
+            setSpellingErrors(prev => ({
+                ...prev,
+                [field]: []
+            }));
+            return;
+        }
+
+        const currentErrors = spellingErrors[field];
+        if (currentErrors.length > 0) {
+            const remainingErrors = currentErrors.filter(error => {
+                const wordInText = value.substring(error.position, error.position + error.length);
+                return wordInText === error.word; 
+            });
+
+            if (remainingErrors.length !== currentErrors.length) {
+                setSpellingErrors(prev => ({
+                    ...prev,
+                    [field]: remainingErrors
+                }));
+
+                if (remainingErrors.length === 0) return;
+            }
+        }
         
         try {
             const errors = await checkSpelling(value);
@@ -65,24 +87,25 @@ const AboutMe = ({ onDataChange, initialData }) => {
         }
     };
 
-    // Добавляем debounce для проверки орфографии
+    const timeDelay = 500;
+
     useEffect(() => {
-        const timer = setTimeout(() => checkFieldSpelling('education', education), 1000);
+        const timer = setTimeout(() => checkFieldSpelling('education', education), timeDelay);
         return () => clearTimeout(timer);
     }, [education]);
 
     useEffect(() => {
-        const timer = setTimeout(() => checkFieldSpelling('skills', skills), 1000);
+        const timer = setTimeout(() => checkFieldSpelling('skills', skills), timeDelay);
         return () => clearTimeout(timer);
     }, [skills]);
 
     useEffect(() => {
-        const timer = setTimeout(() => checkFieldSpelling('experience', experience), 1000);
+        const timer = setTimeout(() => checkFieldSpelling('experience', experience), timeDelay);
         return () => clearTimeout(timer);
     }, [experience]);
 
     useEffect(() => {
-        const timer = setTimeout(() => checkFieldSpelling('preferences', preferences), 1000);
+        const timer = setTimeout(() => checkFieldSpelling('preferences', preferences), timeDelay);
         return () => clearTimeout(timer);
     }, [preferences]);
 
