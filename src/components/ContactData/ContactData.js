@@ -14,6 +14,18 @@ const ContactData = ({ onDataChange, initialData }) => {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
+    if (initialData?.phone !== undefined) {
+      setPhone(initialData.phone);
+    }
+    if (initialData?.email !== undefined) {
+      setEmail(initialData.email);
+    }
+    if (initialData?.vk !== undefined) {
+      setVk(initialData.vk);
+    }
+  }, [initialData?.phone, initialData?.email, initialData?.vk]);
+
+  useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.matchMedia('(max-width: 600px)').matches);
     };
@@ -97,12 +109,6 @@ const ContactData = ({ onDataChange, initialData }) => {
             value={phone}
             onChange={handlePhoneChange}
             placeholder="+7 (999) 123-45-67"
-            style={{
-              fontSize: isMobile ? '14px' : '16px',
-              padding: '8px 12px',
-              width: '100%',
-              boxSizing: 'border-box'
-            }}
           />
         </FormItem>
         <FormItem top="Почта">
@@ -113,15 +119,9 @@ const ContactData = ({ onDataChange, initialData }) => {
             value={email}
             onChange={(e) => handleChange('email', e.target.value)}
             placeholder="example@mail.ru"
-            style={{
-              fontSize: isMobile ? '14px' : '16px',
-              padding: '8px 12px',
-              width: '100%',
-              boxSizing: 'border-box'
-            }}
           />
         </FormItem>
-        <FormItem top="VK">
+        <FormItem top="VK" >
           <Textarea
             maxLength={25} 
             rows={1}
@@ -129,12 +129,6 @@ const ContactData = ({ onDataChange, initialData }) => {
             value={vk}
             onChange={(e) => handleChange('vk', e.target.value)}
             placeholder="vk.com/username"
-            style={{
-              fontSize: isMobile ? '14px' : '16px',
-              padding: '8px 12px',
-              width: '100%',
-              boxSizing: 'border-box'
-            }}
           />
         </FormItem>
       </FormLayoutGroup>

@@ -16,6 +16,15 @@ const ProfileForm = ({ onDataChange, initialData }) => {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
+    if (initialData?.name !== undefined) {
+      setName(initialData.name);
+    }
+    if (initialData?.lastName !== undefined) {
+      setLastName(initialData.lastName);
+    }
+  }, [initialData?.name, initialData?.lastName]);
+
+  useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.matchMedia('(max-width: 600px)').matches);
     };

@@ -146,6 +146,44 @@ const createHTMLFromData = (data) => {
     return container;
 };
 
+// Функция для определения платформы
+const isVKMiniApp = () => {
+    return window.location.href.includes('vk_platform=mobile_android') || 
+           window.location.href.includes('vk_platform=mobile_iphone');
+};
+
+// Функция для скачивания файла через VK Bridge
+const downloadWithVKBridge = async (blob, filename, mimeType) => {
+    // Создаем новый blob с правильным MIME-типом
+    const typedBlob = new Blob([blob], { type: mimeType });
+    const tempUrl = URL.createObjectURL(typedBlob);
+    
+    try {
+        const result = await bridge.send('VKWebAppDownloadFile', {
+            url: tempUrl,
+            filename: filename
+        });
+        if (!result.result) {
+            throw new Error('Failed to download file through VK Bridge');
+        }
+        
+        // Определяем платформу и путь сохранения
+        const platform = window.location.href.includes('vk_platform=mobile_android') ? 'Android' : 'iOS';
+        const saveLocation = platform === 'Android' 
+            ? 'папку "Загрузки"' 
+            : 'приложение "Файлы" в папку "Загрузки"';
+        
+        // Показываем сообщение об успешном сохранении
+        alert(`Файл ${filename} успешно сохранен в ${saveLocation} вашего устройства`);
+        
+    } catch (error) {
+        console.error('Error downloading through VK Bridge:', error);
+        alert('Произошла ошибка при скачивании файла. Попробуйте позже.');
+    } finally {
+        setTimeout(() => URL.revokeObjectURL(tempUrl), 10000);
+    }
+};
+
 export async function exportToPDF(elementId, filename = 'CV.pdf') {
     const mainPanel = document.getElementById('main');
     if (!mainPanel) {
@@ -205,6 +243,11 @@ export async function exportToPDF(elementId, filename = 'CV.pdf') {
         `;
         container.appendChild(style);
         
+        const nameElement = container.querySelector('div');
+        if (nameElement && nameElement.textContent.includes(formData.name)) {
+            nameElement.className = 'name-section';
+        }
+        
         const sections = container.children;
         Array.from(sections).forEach(section => {
             if (!section.classList.contains('pdf-container') && section.tagName !== 'STYLE') {
@@ -213,6 +256,7 @@ export async function exportToPDF(elementId, filename = 'CV.pdf') {
         });
         
         container.classList.add('pdf-container');
+        
         document.body.appendChild(container);
         
         const opt = {
@@ -235,37 +279,13 @@ export async function exportToPDF(elementId, filename = 'CV.pdf') {
                 avoid: ['.section', 'img', 'h1', 'h2']
             }
         };
-
+        
         const pdfBlob = await html2pdf().set(opt).from(container).outputPdf('blob');
         
-        // Check if running in VK Mini App
-        const isVKMiniApp = window.location.href.includes('vk_platform=mobile_android') || 
-                           window.location.href.includes('vk_platform=mobile_iphone');
-
-        if (isVKMiniApp) {
-            // Create a temporary URL for the PDF blob
-            const pdfUrl = URL.createObjectURL(pdfBlob);
-            
-            try {
-                // Use VK Bridge to download the file
-                const result = await bridge.send('VKWebAppDownloadFile', {
-                    url: pdfUrl,
-                    filename: filename
-                });
-                
-                if (!result.result) {
-                    throw new Error('Failed to download file through VK Bridge');
-                }
-            } catch (error) {
-                console.error('Error downloading through VK Bridge:', error);
-                alert('Произошла ошибка при скачивании файла. Попробуйте позже.');
-            } finally {
-                // Clean up the temporary URL
-                setTimeout(() => URL.revokeObjectURL(pdfUrl), 10000);
-            }
+        if (isVKMiniApp()) {
+            await downloadWithVKBridge(pdfBlob, filename, 'application/pdf');
         } else {
-            // Browser download fallback
-            const pdfUrl = URL.createObjectURL(pdfBlob);
+            const pdfUrl = URL.createObjectURL(new Blob([pdfBlob], { type: 'application/pdf' }));
             const downloadLink = document.createElement('a');
             downloadLink.href = pdfUrl;
             downloadLink.download = filename;
@@ -466,7 +486,19 @@ export async function exportToDOCX(userData) {
     try {
         const doc = await createDOCX(userData);
         const blob = await Packer.toBlob(doc);
-        saveAs(blob, `${userData.name || "Резюме"}.docx`);
+        const filename = `${userData.name || "Резюме"}.docx`;
+
+        if (isVKMiniApp()) {
+            await downloadWithVKBridge(
+                blob, 
+                filename, 
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            );
+        } else {
+            saveAs(new Blob([blob], { 
+                type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
+            }), filename);
+        }
     } catch (error) {
         console.error("Ошибка генерации DOCX:", error);
         alert("Произошла ошибка при создании документа!");
